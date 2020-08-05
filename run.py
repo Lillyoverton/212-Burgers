@@ -1,5 +1,10 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, g
+import sqlite3
+
+
 app = Flask(__name__)
+
+MENUDB = 'menu.db'
 
 burgers = [
     ['Classic Burger', '$4.99'],
@@ -24,6 +29,8 @@ sides = [
 
 @app.route('/')
 def index():
+    db = sqlite3.connect(MENUDB)
+    print(db)
     return render_template('index.html', disclaimer='may contain traces of nuts', burgers=burgers, drinks=drinks, sides=sides)
 
 @app.route('/order')
