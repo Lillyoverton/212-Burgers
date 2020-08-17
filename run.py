@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, session, redirect, url_for
 import sqlite3
 
 app = Flask(__name__)
+app.secret_key  = 'hsgfdfg4g7378gwo'
 
 # to run:
 # cd to directory
@@ -86,3 +87,41 @@ def confirm():
         details=details,
         items=items
         )
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST' and request.form['username'] == 'admin':
+        session['username'] = request.form['username']
+        return redirect(url_for('panel'))
+    else:
+        return render_template('login.html')
+
+@app.route('/panel')
+def panel():
+    orders = []
+    if 'username' in session:
+        con = sqlite3.connect(MENUDB)
+        cur = con.execute('SELECT * FROM orders')
+        for row in cur:
+            orders.append(list(row))
+        con.close()
+        return render_template('panel.html', orders=orders)
+    else:
+        return render_template('login.html')
+
+@app.route('/vieworder/<order_id>')
+def viewOrder(order_id):
+    if 'username' in session:
+        con = sqlite3.connect(MENUDB)
+        cur = con.execute('SELECT * FROM orders WHERE id=?', (order_id,))
+        order = cur.fetchone()
+        con.close()
+        return str(order) + ' user: ' + session['username']
+    else:
+        return redirect(url_for('login')) #render_template('login.html')
+
+@app.route('/logout')
+def logout():
+    if 'username' in session:
+        session.pop('username', None)
+    return redirect(url_for('index'))
